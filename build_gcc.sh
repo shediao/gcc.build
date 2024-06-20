@@ -13,10 +13,11 @@ set -o nounset
 #======================================================================
 # User configuration
 #======================================================================
-export http_proxy=http://30.210.168.111:8118
-export https_proxy=http://30.210.168.111:8118
 # Provide the version of GCC being built
-gcc_version=13.2.0
+gcc_version=${1}
+if [[ -z "$gcc_version" ]]; then
+  gcc_version=13.2.0
+fi
 
 # Additional makefile options.  E.g., "-j 4" for parallel builds.  Parallel
 # builds are faster, however it can cause a build to fail if the project
@@ -35,7 +36,7 @@ build_target=x86_64-unknown-linux-gnu
 #
 # WARNING: do not make 'source_dir' and 'build_dir' the same, or
 # subdirectory of each other! It will cause build problems.
-install_dir=$PWD/opt/gcc-${gcc_version}
+install_dir=$PWD/stage/gcc-${gcc_version}
 build_dir=$PWD/gcc-${gcc_version}_build
 source_dir=$PWD/gcc-${gcc_version}_source
 tarfile_dir=$PWD/gcc-${gcc_version}_taballs
@@ -301,6 +302,8 @@ echo You can now clean the following directories:
 echo
 echo "  - $build_dir"
 echo "  - $source_dir"
+rm -rf "$build_dir"
+rm -rf "$source_dir"
 
 #======================================================================
 # Completion
