@@ -19,6 +19,8 @@ if [[ -z "$gcc_version" ]]; then
   gcc_version=13.2.0
 fi
 
+start_time=$(date +%s)
+
 # Additional makefile options.  E.g., "-j 4" for parallel builds.  Parallel
 # builds are faster, however it can cause a build to fail if the project
 # makefile does not support parallel build.
@@ -43,7 +45,11 @@ tarfile_dir=$PWD/gcc-${gcc_version}_taballs
 
 # String which gets embedded into GCC version info, can be accessed at
 # runtime. Use to indicate who/what/when has built this compiler.
-packageversion="魔尊大人(mózūndàren) <shediao.xsd@alibaba-inc.com>"
+if git config --get user.name &>/dev/null && git config --get user.email &>/dev/null; then
+  packageversion="$(git config --get user.name) <$(git config --get user.email)>"
+else
+  packageversion="$(hostname) $(date '+%Y/%m/%d %H:%M:%S')"
+fi
 
 #======================================================================
 # Support functions
@@ -86,15 +92,22 @@ __untar()
 }
 
 
-__abort()
-{
-        cat <<EOF
-***************
-*** ABORTED ***
-***************
-An error occurred. Exiting...
-EOF
-        exit 1
+all_clean_files=()
+
+__finish() {
+  local exit_code=$?
+  if [[ $exit_code -ge 124 ]]; then
+    echo "this script($(basename $0)) timeout or interrupted by user($exit_code)."
+    exit $exit_code
+  fi
+  for f in "${all_clean_files[@]}"; do
+    if [[ -f "$f" ]]; then rm -f "$f"; fi
+    if [[ -d "$f" ]]; then run rm -rf "$f"; fi
+  done
+  date '+%Y/%m/%d %H:%M:%S'
+  echo "total time: $(( $(date +%s) - $start_time ))s"
+  echo "exit code: $exit_code"
+  exit $exit_code
 }
 
 
@@ -116,7 +129,7 @@ __download()
 
 
 # Set script to abort on any command that results an error status
-trap '__abort' 0
+trap '__finish' EXIT
 trap 'echo "interrupted by user(SIGHUP,logout)"; exit 129' SIGHUP
 trap 'echo "interrupted by user(SIGINT,Ctrl+C)"; exit 130' SIGINT
 trap 'echo "interrupted by user(SIGQUIT,Ctrl+\)"; exit 131' SIGQUIT
@@ -292,10 +305,17 @@ __banner "Summary"
 
 cat << EOF > ${install_dir}/activate
 # source this script to bring GCC ${gcc_version} into your environment
-export PATH=${install_dir}/bin:\$PATH
-export LD_LIBRARY_PATH=${install_dir}/lib:${install_dir}/lib64:\$LD_LIBRARY_PATH
-export MANPATH=${install_dir}/share/man:\$MANPATH
-export INFOPATH=${install_dir}/share/info:\$INFOPATH
+if [ -z "\$BASH_VERSION" ] && [ -z "\$ZSH_VERSION" ]; then
+  { echo "this script is bash script, must use bash/zsh shell."; exit 1; }
+fi
+[[ -n "\$BASH_VERSION" && "\${BASH_SOURCE:-\$0}" == "\$0" ]] && { echo "ERROR: envsetup must be sourced."; exit 1; }
+gcc_install_dir="\${BASH_SOURCE:-\$0}"
+gcc_install_dir="\$(cd "\$(dirname \$gcc_install_dir)" && pwd)"
+export PATH=\${gcc_install_dir}/bin:\$PATH
+export LD_LIBRARY_PATH=\${gcc_install_dir}/lib:\${gcc_install_dir}/lib64:\$LD_LIBRARY_PATH
+export MANPATH=\${gcc_install_dir}/share/man:\$MANPATH
+export INFOPATH=\${gcc_install_dir}/share/info:\$INFOPATH
+unset gcc_install_dir
 EOF
 
 echo GCC has been installed at:
