@@ -43,7 +43,7 @@ tarfile_dir=$PWD/gcc-${gcc_version}_taballs
 
 # String which gets embedded into GCC version info, can be accessed at
 # runtime. Use to indicate who/what/when has built this compiler.
-packageversion="shediao-linux"
+packageversion="魔尊大人(mózūndàren) <shediao.xsd@alibaba-inc.com>"
 
 #======================================================================
 # Support functions
@@ -98,13 +98,17 @@ EOF
 }
 
 
-__wget()
+__download()
 {
     urlroot=$1; shift
     tarfile=$1; shift
 
     if [ ! -e "$tarfile_dir/$tarfile" ]; then
-        wget --verbose ${urlroot}/$tarfile --directory-prefix="$tarfile_dir"
+        if command -V wget &>/dev/null; then
+          wget --verbose "${urlroot}/$tarfile" --directory-prefix="$tarfile_dir"
+        elif command -V curl &>/dev/null; then
+          curl -o "$tarfile_dir/$tarfile" "${urlroot}/$tarfile"
+        fi
     else
         echo "already downloaded: $tarfile  '$tarfile_dir/$tarfile'"
     fi
@@ -113,6 +117,10 @@ __wget()
 
 # Set script to abort on any command that results an error status
 trap '__abort' 0
+trap 'echo "interrupted by user(SIGHUP,logout)"; exit 129' SIGHUP
+trap 'echo "interrupted by user(SIGINT,Ctrl+C)"; exit 130' SIGINT
+trap 'echo "interrupted by user(SIGQUIT,Ctrl+\)"; exit 131' SIGQUIT
+trap 'echo "interrupted by user(SIGTERM,kill)"; exit 143' SIGTERM
 
 
 #======================================================================
@@ -148,7 +156,7 @@ __banner Downloading source code
 
 gcc_tarfile=gcc-${gcc_version}.tar.xz
 
-__wget https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version} $gcc_tarfile
+__download https://ftp.gnu.org/gnu/gcc/gcc-${gcc_version} $gcc_tarfile
 
 # Check tarfiles are found, if not found, dont proceed
 for f in $gcc_tarfile
