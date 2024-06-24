@@ -27,7 +27,14 @@ fi
 
 run rm -rf ./gcc-${gcc_version}_build ./gcc-${gcc_version}_source/
 
-docker_run_options=(-v $script_dir:$script_dir -w $script_dir --user $(id -u):$(id -g) -e USER=$USER -e HOME=$HOME)
+docker_run_options=(
+    -v $HOME/.gitconfig:$HOME/.gitconfig:ro
+    -v $script_dir:$script_dir
+    -w $script_dir
+    --user $(id -u):$(id -g)
+    -e USER=$USER
+    -e HOME=$HOME
+)
 if $REALY_DOCKER_CMD --version | grep -q podman || [[ $REALY_DOCKER_CMD == podman ]] ; then
   docker_run_options+=("--userns" "keep-id")
 fi

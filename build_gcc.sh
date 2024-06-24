@@ -92,18 +92,12 @@ __untar()
 }
 
 
-all_clean_files=()
-
 __finish() {
   local exit_code=$?
   if [[ $exit_code -ge 124 ]]; then
     echo "this script($(basename $0)) timeout or interrupted by user($exit_code)."
     exit $exit_code
   fi
-  for f in "${all_clean_files[@]}"; do
-    if [[ -f "$f" ]]; then rm -f "$f"; fi
-    if [[ -d "$f" ]]; then run rm -rf "$f"; fi
-  done
   date '+%Y/%m/%d %H:%M:%S'
   echo "total time: $(( $(date +%s) - $start_time ))s"
   echo "exit code: $exit_code"
