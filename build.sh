@@ -14,7 +14,7 @@ fi
 container_image="gcc-builder:ubuntu1404"
 
 if [[ -z "$($REALY_DOCKER_CMD images -q "$container_image" 2>/dev/null)" ]]; then
-  $REALY_DOCKER_CMD build -t "$container_image" ./ubuntu-14.04/ || exit 1
+  $REALY_DOCKER_CMD build -t "$container_image" ./docker/ubuntu-14.04/ || exit 1
 fi
 if [[ -z "$($REALY_DOCKER_CMD images -q "$container_image" 2>/dev/null)" ]]; then
   exit 1
