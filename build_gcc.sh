@@ -286,12 +286,12 @@ __banner Installing
 
 nice make install
 
-tar_file_name="gcc-${gcc_version}-$(uname -s | tar A-Z a-z)-$(uname -m)"
+tar_file_name="gcc-${gcc_version}-$(uname -s | tr A-Z a-z)-$(uname -m)"
 
-glibc_version="$(LC_ALL=C ldd --version  | sed -n -e '1s/^ldd .* //p')"
+glibc_version="$(/usr/bin/env LC_ALL=C ldd --version  | sed -n -e '1s/^ldd .* //p')"
 glibc_version=${glibc_version## }
 glibc_version=${glibc_version%% }
-if [[ $glibc_version =~ ^\d+(\.\d+)+$ ]]; then
+if [[ $glibc_version =~ ^[0-9]+(\.[0-9]+)+$ ]]; then
   tar_file_name="${tar_file_name}-glibc-${glibc_version}+"
 fi
 
